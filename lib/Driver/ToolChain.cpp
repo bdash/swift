@@ -348,7 +348,7 @@ ToolChain::constructBatchJob(ArrayRef<const Job *> unsortedJobs,
   // will trigger use of supplementary output file maps, but in some rare corner
   // cases (very few files, very long paths) they might not. However, in those
   // cases we _should_ degrade to using response files to pass arguments to the
-  // frontend, which is done automatically by code elsewhere.
+  // frontend.
   //
   // The `allowsResponseFiles` flag on the `invocationInfo` we have here exists
   // only to model external tools that don't know about response files, such as
@@ -356,9 +356,22 @@ ToolChain::constructBatchJob(ArrayRef<const Job *> unsortedJobs,
   // should always be true. But double check with an assert here in case someone
   // failed to set it in `constructInvocation`.
   assert(invocationInfo.allowsResponseFiles);
+
+  const char *responseFilePath = nullptr;
+  const char *responseFileArg = nullptr;
+
+  const bool forceResponseFiles =
+      C.getArgs().hasArg(options::OPT_driver_force_response_files);
+
+  if (forceResponseFiles || !llvm::sys::commandLineFitsWithinSystemLimits(
+                                executablePath, invocationInfo.Arguments)) {
+    responseFilePath = context.getTemporaryFilePath("arguments", "resp");
+    responseFileArg = C.getArgs().MakeArgString(Twine("@") + responseFilePath);
+  }
   return llvm::make_unique<BatchJob>(
       *batchCJA, inputJobs.takeVector(), std::move(output), executablePath,
       std::move(invocationInfo.Arguments),
       std::move(invocationInfo.ExtraEnvironment),
-      std::move(invocationInfo.FilelistInfos), sortedJobs, NextQuasiPID);
+      std::move(invocationInfo.FilelistInfos), sortedJobs, NextQuasiPID,
+      responseFilePath, responseFileArg);
 }

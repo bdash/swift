@@ -398,9 +398,10 @@ public:
   BatchJob(const JobAction &Source, SmallVectorImpl<const Job *> &&Inputs,
            std::unique_ptr<CommandOutput> Output, const char *Executable,
            llvm::opt::ArgStringList Arguments,
-           EnvironmentVector ExtraEnvironment,
-           std::vector<FilelistInfo> Infos,
-           ArrayRef<const Job *> Combined, Job::PID &NextQuasiPID);
+           EnvironmentVector ExtraEnvironment, std::vector<FilelistInfo> Infos,
+           ArrayRef<const Job *> Combined, Job::PID &NextQuasiPID,
+           const char *ResponseFilePath = nullptr,
+           const char *ResponseFileArg = nullptr);
 
   ArrayRef<const Job*> getCombinedJobs() const {
     return CombinedJobs;
